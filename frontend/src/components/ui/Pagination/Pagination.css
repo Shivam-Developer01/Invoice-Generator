@@ -1,0 +1,45 @@
+.app-pagination {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-top: 1.5rem;
+
+  gap: 1rem;
+
+  flex-wrap: wrap;
+}
+
+.pagination-info {
+  color: var(--text-light);
+
+  font-size: 0.95rem;
+}
+
+.pagination-controls {
+  display: flex;
+
+  align-items: center;
+
+  gap: 1rem;
+}
+
+.pagination-page {
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .app-pagination {
+    flex-direction: column;
+
+    align-items: flex-start;
+  }
+
+  .pagination-controls {
+    width: 100%;
+
+    justify-content: space-between;
+  }
+}

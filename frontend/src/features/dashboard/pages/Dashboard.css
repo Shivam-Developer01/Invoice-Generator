@@ -1,0 +1,9 @@
+.dashboard-list-item {
+  padding: 12px;
+  border-radius: 10px;
+  transition: 0.2s;
+}
+
+.dashboard-list-item:hover {
+  background: #f8fafc;
+}

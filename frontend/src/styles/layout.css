@@ -1,0 +1,193 @@
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--background);
+}
+
+.sidebar {
+  width: 260px;
+  background: var(--sidebar);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+}
+
+.sidebar-logo {
+  margin-bottom: 40px;
+}
+
+.sidebar-logo h4 {
+  color: var(--primary);
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar-menu a {
+  color: white;
+  text-decoration: none;
+  padding: 12px;
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.sidebar-menu a.active {
+  background: var(--primary);
+  color: black;
+}
+
+.sidebar-menu a:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar-footer a,
+.sidebar-footer button {
+  color: white !important;
+}
+
+.sidebar-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 20px;
+}
+
+.sidebar-footer button {
+  text-decoration: none;
+}
+
+.sidebar-footer button:hover {
+  color: var(--primary) !important;
+}
+
+.sidebar {
+  transition: width 0.25s ease;
+}
+
+.sidebar.collapsed {
+  width: 80px;
+}
+
+.sidebar.collapsed .sidebar-logo p {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-menu a {
+  justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-menu span {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-logo {
+  text-align: center;
+}
+
+.main-layout {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar {
+  transition: all 0.3s ease;
+}
+
+.sidebar-overlay {
+  display: none;
+}
+
+@media (max-width: 991px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1040;
+
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1030;
+  }
+
+  .sidebar.collapsed {
+    width: 260px;
+  }
+}
+
+.sidebar {
+  flex-shrink: 0;
+}
+
+.main-layout {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.navbar-custom {
+  height: 70px;
+  background: white;
+  box-shadow: var(--shadow);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 30px;
+}
+
+.page-content {
+  flex: 1;
+  padding: 30px;
+  overflow-x: auto;
+}
+
+.navbar-custom {
+  height: 70px;
+  background: white;
+  box-shadow: var(--shadow);
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 0 24px;
+}
+
+.page-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (max-width: 991px) {
+  .navbar-custom {
+    padding: 0 18px;
+  }
+
+  .page-title {
+    font-size: 1rem;
+  }
+}

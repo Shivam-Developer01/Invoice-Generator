@@ -1,0 +1,18 @@
+.app-table-wrapper {
+  width: 100%;
+  margin-bottom: 10px;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.pagination-info {
+  margin: 0px 0px 8px 3px;
+}
+
+.pagination-page {
+  margin: 0px 8px 0px 8px;
+}
+
+.app-table-wrapper .dropdown-menu {
+  z-index: 1055;
+}
