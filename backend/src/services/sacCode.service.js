@@ -1,6 +1,6 @@
 import SacCode from "../models/sacCode.model.js";
 import ApiError from "../errors/ApiError.js";
-import QueryFeatures from "../utils/QueryFeatures.js";
+import QueryFeatures from "../utils/queryFeatures.js";
 
 export const createSacCode = async (data, userId) => {
   const exists = await SacCode.findOne({
