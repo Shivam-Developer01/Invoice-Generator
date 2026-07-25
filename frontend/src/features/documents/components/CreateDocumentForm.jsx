@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import useDownloadPdf from "../hooks/useDownloadPdf";
 import { useNavigate } from "react-router-dom";
 import routes from "../../../config/routes";
-import * as documentService from "../services/documentService";
+import useRegeneratePdf from "../hooks/useRegeneratePdf";
 
 import useDocument from "../context/useDocument";
 
@@ -27,6 +27,7 @@ import AddSacCodeModal from "../../sacCodes/components/AddSacCodeModal";
 
 function CreateDocumentForm({ document, isEditMode, loading }) {
   const downloadPdfMutation = useDownloadPdf();
+  const regeneratePdfMutation = useRegeneratePdf();
 
   const navigate = useNavigate();
   const { documentType } = useDocument();
@@ -147,6 +148,10 @@ function CreateDocumentForm({ document, isEditMode, loading }) {
           data: payload,
         });
 
+        // Regenerate the PDF on the server
+        await regeneratePdfMutation.mutateAsync(document._id);
+
+        // Download the updated PDF
         await downloadPdfMutation.mutateAsync(document._id);
       } else {
         const response = await createDocumentMutation.mutateAsync(payload);
@@ -196,8 +201,11 @@ function CreateDocumentForm({ document, isEditMode, loading }) {
         <FooterActions
           loading={
             isEditMode
-              ? updateDocumentMutation.isPending
-              : createDocumentMutation.isPending
+              ? updateDocumentMutation.isPending ||
+                regeneratePdfMutation.isPending ||
+                downloadPdfMutation.isPending
+              : createDocumentMutation.isPending ||
+                downloadPdfMutation.isPending
           }
           text={isEditMode ? "Update Document" : "Generate PDF"}
         />

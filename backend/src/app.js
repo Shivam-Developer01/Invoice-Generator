@@ -3,6 +3,7 @@ import helmet from "helmet";
 import cors from "cors";
 import compression from "compression";
 import morgan from "morgan";
+import path from "path";
 
 import ApiResponse from "./errors/ApiResponse.js";
 import ApiError from "./errors/ApiError.js";
@@ -24,13 +25,19 @@ import sacCodeRoutes from "./routes/sacCode.routes.js";
 
 const app = express();
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: {
+      policy: "cross-origin",
+    },
+  })
+);
 
 app.use(compression());
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.FRONTEND_URL,
     credentials: true,
     exposedHeaders: ["Content-Disposition"],
   }),
@@ -42,6 +49,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(morgan("dev"));
 
+app.use("/uploads", express.static(path.resolve("uploads")));
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/company", companyRoutes);

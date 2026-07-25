@@ -11,3 +11,13 @@ export const updateCompany = async (data) => {
 
   return response.data;
 };
+
+export const uploadLogo = async (formData) => {
+  const response = await api.post("/company/logo", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data;
+};

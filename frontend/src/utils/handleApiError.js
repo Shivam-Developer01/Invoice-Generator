@@ -3,14 +3,11 @@ import { toast } from "react-toastify";
 const handleApiError = (error) => {
   const response = error.response?.data;
 
-  // Validation Errors
+  // Validation errors
   if (response?.errors?.length) {
-    const messages = [...new Set(response.errors.map((err) => err.msg))];
-
-    messages.forEach((message) => {
-      toast.error(message);
-    });
-
+    [...new Set(response.errors.map((err) => err.msg))].forEach((message) =>
+      toast.error(message)
+    );
     return;
   }
 
@@ -28,9 +25,6 @@ const handleApiError = (error) => {
 
   // Fallback
   toast.error("Something went wrong. Please try again.");
-
-  // General Error
-  toast.error(response?.message || "Something went wrong. Please try again.");
 };
 
 export default handleApiError;

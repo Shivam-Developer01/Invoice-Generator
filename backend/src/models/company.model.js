@@ -62,11 +62,37 @@ const companySchema = new mongoose.Schema(
     },
 
     bankDetails: {
-      bankName: String,
-      accountName: String,
-      accountNumber: String,
-      ifscCode: String,
-      branch: String,
+      bankName: {
+        type: String,
+        trim: true,
+      },
+
+      accountName: {
+        type: String,
+        trim: true,
+      },
+
+      accountNumber: {
+        type: String,
+        trim: true,
+      },
+
+      ifscCode: {
+        type: String,
+        uppercase: true,
+        trim: true,
+      },
+
+      branch: {
+        type: String,
+        trim: true,
+      },
+
+      upiId: {
+        type: String,
+        trim: true,
+        default: "",
+      },
     },
 
     logoUrl: {

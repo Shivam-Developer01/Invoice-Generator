@@ -15,6 +15,12 @@ const bankSchema = z.object({
   accountNumber: z.string().optional(),
   ifscCode: z.string().optional(),
   branch: z.string().optional(),
+  upiId: z
+    .string()
+    .trim()
+    .regex(/^[\w.-]+@[\w.-]+$/, "Invalid UPI ID")
+    .optional()
+    .or(z.literal("")),
 });
 
 const gstOptionSchema = z.object({

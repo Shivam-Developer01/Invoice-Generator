@@ -4,13 +4,20 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Row, Col, Form, Button } from "react-bootstrap";
 
 import PrimaryButton from "../../../components/ui/Button/PrimaryButton";
+import useUploadLogo from "../hooks/useUploadLogo";
 
 import companySchema from "../validation/companySchema";
 import useUpdateCompany from "../hooks/useUpdateCompany";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
+import { useState } from "react";
+import { useRef } from "react";
 
 function CompanyForm({ company, loading }) {
   const updateCompanyMutation = useUpdateCompany();
+  const fileInputRef = useRef(null);
+
+  const uploadLogoMutation = useUploadLogo();
+  const [logoSuccess, setLogoSuccess] = useState(false);
 
   const {
     register,
@@ -56,6 +63,7 @@ function CompanyForm({ company, loading }) {
         accountNumber: "",
         ifscCode: "",
         branch: "",
+        upiId: "",
       },
 
       gstOptions: [],
@@ -89,11 +97,41 @@ function CompanyForm({ company, loading }) {
         corporateOffice: {},
       },
 
-      bankDetails: company.bankDetails || {},
+      bankDetails: company.bankDetails || {
+        bankName: "",
+        accountName: "",
+        accountNumber: "",
+        ifscCode: "",
+        branch: "",
+        upiId: "",
+      },
 
       gstOptions: company.gstOptions || [],
     });
   }, [company, reset]);
+
+  const handleLogoChange = async (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("logo", file);
+
+    try {
+      await uploadLogoMutation.mutateAsync(formData);
+
+      setLogoSuccess(true);
+
+      setTimeout(() => {
+        setLogoSuccess(false);
+      }, 2500);
+    } catch (error) {
+      console.error(error);
+    }
+
+    e.target.value = "";
+  };
 
   const onSubmit = async (data) => {
     try {
@@ -110,6 +148,67 @@ function CompanyForm({ company, loading }) {
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
       {" "}
+      <div className="border rounded-4 bg-light p-4 mb-4 text-center">
+        <h5 className="fw-semibold mb-3">Company Logo</h5>
+
+        {company?.logoUrl ? (
+          <img
+            src={`${import.meta.env.VITE_SERVER_URL}${company.logoUrl}`}
+            alt="Company Logo"
+            className="img-thumbnail shadow-sm"
+            style={{
+              width: 130,
+              height: 130,
+              objectFit: "contain",
+              borderRadius: 12,
+              padding: 10,
+              background: "#fff",
+            }}
+          />
+        ) : (
+          <div
+            className="border rounded-3 d-flex justify-content-center align-items-center bg-white mx-auto"
+            style={{
+              width: 130,
+              height: 130,
+            }}
+          >
+            <span className="text-muted">No Logo</span>
+          </div>
+        )}
+
+        <Form.Control
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="d-none"
+          onChange={handleLogoChange}
+        />
+
+        <div className="mt-4">
+          <PrimaryButton
+            type="button"
+            loading={uploadLogoMutation.isPending}
+            onClick={() => fileInputRef.current.click()}
+          >
+            {uploadLogoMutation.isPending ? "Uploading..." : "Change Logo"}
+          </PrimaryButton>
+          {logoSuccess && (
+            <div className="alert alert-success py-2 mt-3 mb-0">
+              ✅ Logo updated successfully.
+            </div>
+          )}
+
+          <div
+            className="text-muted mt-2"
+            style={{
+              fontSize: "0.85rem",
+            }}
+          >
+            PNG, JPG • Max 1 MB
+          </div>
+        </div>
+      </div>
       {/* Company Information */}
       <h5 className="mb-3">Company Information</h5>
       <Row className="g-3 mb-4">
@@ -181,14 +280,6 @@ function CompanyForm({ company, loading }) {
             <Form.Label>Website</Form.Label>
 
             <Form.Control {...register("website")} />
-          </Form.Group>
-        </Col>
-
-        <Col md={12}>
-          <Form.Group>
-            <Form.Label>Logo URL</Form.Label>
-
-            <Form.Control {...register("logoUrl")} />
           </Form.Group>
         </Col>
       </Row>
@@ -318,6 +409,20 @@ function CompanyForm({ company, loading }) {
             placeholder="Account Number"
             {...register("bankDetails.accountNumber")}
           />
+        </Col>
+        <Col md={6}>
+          <Form.Group>
+            <Form.Label>UPI ID (Optional)</Form.Label>
+
+            <Form.Control
+              placeholder="company@upi"
+              {...register("bankDetails.upiId")}
+            />
+
+            <Form.Text className="text-muted">
+              This will appear on invoices for quick digital payments.
+            </Form.Text>
+          </Form.Group>
         </Col>
       </Row>{" "}
       {/* GST Options */}

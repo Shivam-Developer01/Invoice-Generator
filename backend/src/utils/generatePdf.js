@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import PDFDocument from "pdfkit";
+import QRCode from "qrcode";
 
 const generatePdf = async ({ document, company }) => {
   const directory = path.join(process.cwd(), "src", "pdfs", "invoices");
@@ -22,6 +23,25 @@ const generatePdf = async ({ document, company }) => {
 
   const stream = fs.createWriteStream(filePath);
 
+  const upiId = company.bankDetails?.upiId;
+
+  const upiUrl =
+    upiId &&
+    `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(
+      company.companyName,
+    )}&am=${document.totalAmount.toFixed(
+      2,
+    )}&cu=INR&tn=${encodeURIComponent(document.documentNumber)}`;
+
+  let qrBuffer = null;
+
+  if (upiUrl) {
+    qrBuffer = await QRCode.toBuffer(upiUrl, {
+      width: 180,
+      margin: 1,
+    });
+  }
+
   pdf.pipe(stream);
 
   /* ========================================================== */
@@ -30,81 +50,161 @@ const generatePdf = async ({ document, company }) => {
 
   const centerX = 297;
 
-  // Company Name
-  pdf
-    .font("Helvetica-Bold")
-    .fontSize(20)
-    .fillColor("#111111")
-    .text(company.companyName.toUpperCase(), {
-      align: "center",
-    });
+  const logoPath = company.logoUrl
+    ? path.join(process.cwd(), company.logoUrl.replace(/^\/+/, ""))
+    : null;
 
-  pdf.moveDown(0.6);
+  const hasLogo = logoPath && fs.existsSync(logoPath);
 
   const address = company.addresses?.registeredOffice;
 
-  pdf.font("Helvetica").fontSize(10).fillColor("#444444");
+  if (hasLogo) {
+    const logoX = 40;
+    const logoY = 35;
+    const logoSize = 70;
 
-  // Address
-  if (address) {
-    pdf.text(
-      `${address.addressLine1}${
-        address.addressLine2 ? ", " + address.addressLine2 : ""
-      }`,
-      {
+    pdf.image(logoPath, logoX, logoY, {
+      fit: [logoSize, logoSize],
+      align: "center",
+      valign: "center",
+    });
+
+    const textX = 125;
+
+    pdf
+      .font("Helvetica-Bold")
+      .fontSize(20)
+      .fillColor("#111111")
+      .text(company.companyName.toUpperCase(), textX, 40);
+
+    pdf.font("Helvetica").fontSize(10).fillColor("#444444");
+
+    if (address) {
+      pdf.text(
+        `${address.addressLine1}${
+          address.addressLine2 ? ", " + address.addressLine2 : ""
+        }`,
+        textX,
+      );
+
+      pdf.text(
+        `${address.city}, ${address.state}, ${address.country} - ${address.pincode}`,
+        textX,
+      );
+    }
+
+    let infoY = 105;
+
+    pdf
+      .font("Helvetica-Bold")
+      .fillColor("#111111")
+      .text("GSTIN :", textX, infoY);
+
+    pdf.font("Helvetica").text(company.gstin || "-", textX + 45, infoY);
+
+    pdf.font("Helvetica-Bold").text("PAN :", 330, infoY);
+
+    pdf.font("Helvetica").text(company.pan || "-", 365, infoY);
+
+    infoY += 18;
+
+    pdf.font("Helvetica-Bold").text("Phone :", textX, infoY);
+
+    pdf.font("Helvetica").text(company.phone || "-", textX + 45, infoY);
+
+    pdf.font("Helvetica-Bold").text("Email :", 330, infoY);
+
+    pdf.font("Helvetica").text(company.email || "-", 370, infoY);
+
+    infoY += 18;
+
+    if (company.website) {
+      pdf
+        .font("Helvetica-Bold")
+        .fillColor("#111111")
+        .text("Website :", textX, infoY);
+
+      pdf
+        .font("Helvetica")
+        .fillColor("#2563eb")
+        .text(company.website, textX + 60, infoY);
+    }
+
+    pdf.y = 155;
+  } else {
+    pdf
+      .font("Helvetica-Bold")
+      .fontSize(20)
+      .fillColor("#111111")
+      .text(company.companyName.toUpperCase(), {
         align: "center",
-      },
-    );
+      });
 
-    pdf.text(
-      `${address.city}, ${address.state}, ${address.country} - ${address.pincode}`,
-      {
-        align: "center",
-      },
-    );
-  }
+    pdf.moveDown(0.6);
 
-  pdf.moveDown(0.9);
+    pdf.font("Helvetica").fontSize(10).fillColor("#444444");
 
-  // GST & PAN
-  const leftInfoX = 90;
-  const rightInfoX = 310;
+    if (address) {
+      pdf.text(
+        `${address.addressLine1}${
+          address.addressLine2 ? ", " + address.addressLine2 : ""
+        }`,
+        {
+          align: "center",
+        },
+      );
 
-  pdf
-    .font("Helvetica-Bold")
-    .fillColor("#111111")
-    .text("GSTIN :", leftInfoX, pdf.y);
+      pdf.text(
+        `${address.city}, ${address.state}, ${address.country} - ${address.pincode}`,
+        {
+          align: "center",
+        },
+      );
+    }
 
-  pdf.font("Helvetica").text(company.gstin, leftInfoX + 45, pdf.y - 11);
+    pdf.moveDown(0.9);
 
-  pdf.font("Helvetica-Bold").text("PAN :", rightInfoX, pdf.y - 11);
+    const leftInfoX = 90;
+    const rightInfoX = 310;
 
-  pdf.font("Helvetica").text(company.pan, rightInfoX + 35, pdf.y - 11);
+    pdf
+      .font("Helvetica-Bold")
+      .fillColor("#111111")
+      .text("GSTIN :", leftInfoX, pdf.y);
 
-  pdf.moveDown(0.6);
+    pdf.font("Helvetica").text(company.gstin, leftInfoX + 45, pdf.y - 11);
 
-  // Phone & Email
-  pdf.font("Helvetica-Bold").text("Phone :", leftInfoX, pdf.y);
+    pdf.font("Helvetica-Bold").text("PAN :", rightInfoX, pdf.y - 11);
 
-  pdf.font("Helvetica").text(company.phone || "-", leftInfoX + 45, pdf.y - 11);
+    pdf.font("Helvetica").text(company.pan, rightInfoX + 35, pdf.y - 11);
 
-  pdf.font("Helvetica-Bold").text("Email :", rightInfoX, pdf.y - 11);
+    pdf.moveDown(0.6);
 
-  pdf.font("Helvetica").text(company.email || "-", rightInfoX + 42, pdf.y - 11);
-
-  pdf.moveDown(0.6);
-
-  // Website
-  if (company.website) {
-    pdf.font("Helvetica-Bold").text("Website :", leftInfoX, pdf.y);
+    pdf.font("Helvetica-Bold").text("Phone :", leftInfoX, pdf.y);
 
     pdf
       .font("Helvetica")
-      .fillColor("#1d4ed8")
-      .text(company.website, leftInfoX + 60, pdf.y - 11);
-  }
+      .text(company.phone || "-", leftInfoX + 45, pdf.y - 11);
 
-  pdf.moveDown(1);
+    pdf.font("Helvetica-Bold").text("Email :", rightInfoX, pdf.y - 11);
+
+    pdf
+      .font("Helvetica")
+      .text(company.email || "-", rightInfoX + 42, pdf.y - 11);
+
+    pdf.moveDown(0.6);
+
+    if (company.website) {
+      pdf.font("Helvetica-Bold").text("Website :", leftInfoX, pdf.y);
+
+      pdf
+        .font("Helvetica")
+        .fillColor("#2563eb")
+        .text(company.website, leftInfoX + 60, pdf.y - 11);
+    }
+
+    pdf.moveDown(1);
+  }
 
   pdf.fillColor("#111111");
 
@@ -317,28 +417,28 @@ const generatePdf = async ({ document, company }) => {
 
   pdf
     .font("Helvetica-Bold")
-    .fontSize(12)
+    .fontSize(10)
     .fillColor("black")
     .text("Summary", summaryX, summaryY);
 
-  summaryY += 22;
+  summaryY += 20;
 
   // Calculate box height dynamically
-  const boxHeightC = (document.taxes.length + 3) * summaryRowHeight + 18;
+  const boxHeightC = (document.taxes.length + 3) * summaryRowHeight + 16;
 
   // Outer Box
   pdf.roundedRect(summaryX, summaryY, summaryWidth, boxHeightC, 4).stroke();
 
   // ---------- Subtotal ----------
 
-  let rowY = summaryY + 10;
+  let rowY = summaryY + 9;
 
   pdf.font("Helvetica");
 
-  pdf.text("Subtotal", summaryX + 10, rowY);
+  pdf.text("Subtotal", summaryX + 9, rowY);
 
   pdf.text(`Rs. ${document.subtotal.toFixed(2)}`, summaryX + 120, rowY, {
-    width: 95,
+    width: 90,
     align: "right",
   });
 
@@ -347,10 +447,10 @@ const generatePdf = async ({ document, company }) => {
   // ---------- Taxes ----------
 
   document.taxes.forEach((tax) => {
-    pdf.text(`${tax.name} (${tax.percentage}%)`, summaryX + 10, rowY);
+    pdf.text(`${tax.name} (${tax.percentage}%)`, summaryX + 9, rowY);
 
-    pdf.text(`Rs. ${tax.amount.toFixed(2)}`, summaryX + 120, rowY, {
-      width: 95,
+    pdf.text(`Rs. ${tax.amount.toFixed(2)}`, summaryX + 118, rowY, {
+      width: 90,
       align: "right",
     });
 
@@ -359,8 +459,8 @@ const generatePdf = async ({ document, company }) => {
 
   // Divider
   pdf
-    .moveTo(summaryX + 10, rowY)
-    .lineTo(summaryX + summaryWidth - 10, rowY)
+    .moveTo(summaryX + 9, rowY)
+    .lineTo(summaryX + summaryWidth - 9, rowY)
     .stroke();
 
   rowY += 8;
@@ -369,14 +469,14 @@ const generatePdf = async ({ document, company }) => {
 
   pdf.font("Helvetica-Bold");
 
-  pdf.text("Total Tax", summaryX + 10, rowY);
+  pdf.text("Total Tax", summaryX + 9, rowY);
 
   pdf.text(`Rs. ${document.totalTax.toFixed(2)}`, summaryX + 120, rowY, {
-    width: 95,
+    width: 90,
     align: "right",
   });
 
-  rowY += summaryRowHeight + 4;
+  rowY += summaryRowHeight + 3;
 
   // ---------- Grand Total ----------
 
@@ -387,12 +487,12 @@ const generatePdf = async ({ document, company }) => {
     .fill()
     .restore();
 
-  pdf.font("Helvetica-Bold").fontSize(11).fillColor("white");
+  pdf.font("Helvetica-Bold").fontSize(10).fillColor("white");
 
-  pdf.text("Grand Total", summaryX + 10, rowY + 3);
+  pdf.text("Grand Total", summaryX + 9, rowY + 3);
 
   pdf.text(`Rs. ${document.totalAmount.toFixed(2)}`, summaryX + 120, rowY + 3, {
-    width: 95,
+    width: 90,
     align: "right",
   });
 
@@ -402,47 +502,133 @@ const generatePdf = async ({ document, company }) => {
   pdf.y = summaryY + boxHeightC + 25;
 
   /* ========================================================== */
-  /*                    NOTES (LEFT SIDE)                       */
+  /*                  PAYMENT DETAILS (LEFT SIDE)                */
   /* ========================================================== */
 
-  const notesX = 40;
-  const notesY = summaryY;
-  const notesWidth = 250;
-  const notesHeight = 95;
+  const paymentX = 40;
+  const paymentY = summaryY;
+  const paymentWidth = 250;
+
+  const bank = company.bankDetails || {};
+
+  const maskAccount = (account) => {
+    if (!account) return "-";
+
+    return account.length > 4
+      ? "*".repeat(account.length - 4) + account.slice(-4)
+      : account;
+  };
 
   pdf
     .font("Helvetica-Bold")
     .fontSize(12)
     .fillColor("#111111")
-    .text("Notes", notesX, notesY);
+    .text("Payment Details", paymentX, paymentY);
 
-  // pdf
-  //   .roundedRect(notesX, notesY + 18, notesWidth, notesHeight, 4)
-  //   .lineWidth(0.7)
-  //   .strokeColor("#d6d6d6")
-  //   .stroke();
+  let currentPaymentY = paymentY + 28;
+
+  const drawPaymentField = (label, value) => {
+    if (!value) return;
+
+    pdf
+      .font("Helvetica-Bold")
+      .fontSize(9)
+      .fillColor("#555555")
+      .text(label, paymentX + 10, currentPaymentY);
+
+    pdf
+      .font("Helvetica")
+      .fontSize(10)
+      .fillColor("#111111")
+      .text(value, paymentX + 90, currentPaymentY);
+
+    currentPaymentY += 18;
+  };
+
+  drawPaymentField("Bank Name", bank.bankName);
+  drawPaymentField("Account Name", bank.accountName);
+  drawPaymentField("Account No.", maskAccount(bank.accountNumber));
+  drawPaymentField("IFSC", bank.ifscCode);
+  drawPaymentField("Branch", bank.branch);
+  drawPaymentField("UPI ID", bank.upiId);
+
+  /* ---------------- QR CODE ---------------- */
+
+  /* ---------------- QR CODE ---------------- */
+
+  /* ---------------- QR CODE ---------------- */
+
+  if (qrBuffer) {
+    const qrSize = 70;
+
+    const qrX = paymentX + 80; // Center under payment details
+    const qrY = currentPaymentY + 8;
+
+    pdf
+      .roundedRect(qrX - 4, qrY - 4, qrSize + 8, qrSize + 20, 4)
+      .lineWidth(0.5)
+      .strokeColor("#dddddd")
+      .stroke();
+
+    pdf.image(qrBuffer, qrX, qrY, {
+      width: qrSize,
+      height: qrSize,
+    });
+
+    pdf
+      .font("Helvetica")
+      .fontSize(7)
+      .fillColor("#666666")
+      .text("Scan & Pay", qrX, qrY + qrSize + 4, {
+        width: qrSize,
+        align: "center",
+      });
+
+    currentPaymentY = qrY + qrSize + 18;
+  }
+
+  /* ========================================================== */
+  /*                         NOTES                              */
+  /* ========================================================== */
+
+  // Bottom of Summary
+  const summaryBottom = summaryY + boxHeightC;
+
+  const notesTop = Math.max(currentPaymentY, summaryBottom) + 15;
+  const notesHeight = 60;
+
+  // Draw Notes Box...
+
+  // Bottom of Payment Details
+  const paymentBottom = notesTop + notesHeight;
+
+  // Footer starts after whichever section is lower
+  const footerY = Math.max(paymentBottom, summaryBottom) + 35;
+
+  pdf
+    .roundedRect(40, notesTop, 515, notesHeight, 4)
+    .lineWidth(0.7)
+    .strokeColor("#d6d6d6")
+    .stroke();
+
+  pdf
+    .font("Helvetica-Bold")
+    .fontSize(11)
+    .fillColor("#111111")
+    .text("Notes", 50, notesTop + 10);
 
   pdf
     .font("Helvetica")
-    .fontSize(10)
-    .fillColor("#151515")
-    .text(document.notes || "No additional notes.", notesX + 10, notesY + 28, {
-      width: notesWidth,
-      height: notesHeight,
+    .fontSize(9)
+    .fillColor("#333333")
+    .text(document.notes || "No additional notes.", 50, notesTop + 28, {
+      width: 495,
+      height: 30,
     });
 
   /* ========================================================== */
   /*                         FOOTER                             */
   /* ========================================================== */
-
-  // Bottom of Notes box
-  const notesBottom = notesY + notesHeight;
-
-  // Bottom of Summary box
-  const summaryBottom = summaryY + boxHeight;
-
-  // Footer starts after whichever section is lower
-  const footerY = Math.max(notesBottom, summaryBottom) + 100;
 
   // Divider
   pdf

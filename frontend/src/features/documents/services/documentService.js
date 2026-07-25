@@ -27,7 +27,6 @@ export const getDocumentById = async (id) => {
 };
 
 export const updateDocument = async ({ id, data }) => {
-
   const response = await api.patch(`/documents/${id}`, data);
 
   return response.data;
@@ -51,4 +50,10 @@ export const downloadPdf = async (id) => {
         ?.split("filename=")[1]
         ?.replace(/"/g, "") || "document.pdf",
   };
+};
+
+export const regeneratePdf = async (id) => {
+  const response = await api.post(`/documents/${id}/regenerate-pdf`);
+
+  return response.data;
 };

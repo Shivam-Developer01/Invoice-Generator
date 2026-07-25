@@ -2,7 +2,7 @@ import axios from "axios";
 import { getToken, clearSession, isSessionExpired } from "../utils/token";
 
 const api = axios.create({
-  baseURL: "http://localhost:3000/api/v1",
+  baseURL: `${import.meta.env.VITE_BASE_URL}`,
   headers: {
     "Content-Type": "application/json",
   },
@@ -12,9 +12,7 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   if (isSessionExpired()) {
     clearSession();
-
     window.location.href = "/login";
-
     return Promise.reject(new Error("Session expired"));
   }
 
@@ -31,10 +29,15 @@ api.interceptors.response.use(
   (response) => response,
 
   (error) => {
-    if (error.response?.status === 401) {
+    const token = getToken();
+
+    // Logout only if the user was authenticated
+    if (error.response?.status === 401 && token) {
       clearSession();
 
-      window.location.href = "/login";
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
 
     return Promise.reject(error);

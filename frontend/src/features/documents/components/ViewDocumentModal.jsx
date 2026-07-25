@@ -29,11 +29,7 @@ function ViewDocumentModal({ show, document, onClose }) {
 
           <Col md={6}>
             <strong>Due Date</strong>
-            <div>
-              {document.dueDate
-                ? formatDate(document.documentDate)
-                : "-"}
-            </div>
+            <div>{document.dueDate ? formatDate(document.dueDate) : "-"}</div>
           </Col>
         </Row>
 

@@ -26,7 +26,7 @@ await User.create({
 
   password: "Admin@123",
 
-  role: "Co-Founder",
+  role: "CO_FOUNDER",
 });
 
 process.exit();
