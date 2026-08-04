@@ -4,6 +4,7 @@ function ViewCustomerModal({ show, customer, onClose }) {
   if (!customer) return null;
 
   const {
+    customerCode,
     customerName,
     contactPerson,
     email,
@@ -39,6 +40,10 @@ function ViewCustomerModal({ show, customer, onClose }) {
 
       <Modal.Body>
         <Row className="g-4">
+          <Col md={6}>
+            <strong>Customer Code</strong>
+            <div>{customerCode}</div>
+          </Col>
           <Col md={6}>
             <strong>Customer Name</strong>
             <div>{customerName}</div>

@@ -40,6 +40,8 @@ const addressSchema = new mongoose.Schema(
 
 const customerSnapshotSchema = new mongoose.Schema(
   {
+    customerCode: String,
+    
     customerName: {
       type: String,
       required: true,

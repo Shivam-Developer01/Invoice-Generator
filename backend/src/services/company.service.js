@@ -27,8 +27,6 @@ export const updateCompany = async (data, currentUser) => {
     await company.save();
   }
 
-  console.log("Creating company audit log...");
-
   await createAuditLog({
     userId: currentUser._id,
     userName: currentUser.name,

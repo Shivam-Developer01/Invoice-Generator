@@ -22,6 +22,7 @@ const getDocumentAuditMetadata = (document) => ({
 });
 
 const createCustomerSnapshot = (customer) => ({
+  customerCode: customer.customerCode,
   customerName: customer.customerName,
   contactPerson: customer.contactPerson,
   email: customer.email,

@@ -44,11 +44,32 @@ const generatePdf = async ({ document, company }) => {
 
   pdf.pipe(stream);
 
+  const formatDate = (date) =>
+    new Date(date).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+
+  const documentTitle = {
+    INVOICE: "INVOICE",
+    PROFORMA: "PROFORMA INVOICE",
+    CREDIT_NOTE: "CREDIT NOTE",
+  }[document.documentType];
+
+  pdf
+    .font("Helvetica-Bold")
+    .fontSize(20)
+    .fillColor("#111111")
+    .text(documentTitle, 40, 25, {
+      align: "center",
+    });
+
+  pdf.moveDown(1);
+
   /* ========================================================== */
   /*                       COMPANY DETAILS                      */
   /* ========================================================== */
-
-  const centerX = 297;
 
   const logoPath = company.logoUrl
     ? path.join(process.cwd(), company.logoUrl.replace(/^\/+/, ""))
@@ -60,8 +81,8 @@ const generatePdf = async ({ document, company }) => {
 
   if (hasLogo) {
     const logoX = 40;
-    const logoY = 35;
-    const logoSize = 70;
+    const logoY = 60;
+    const logoSize = 55;
 
     pdf.image(logoPath, logoX, logoY, {
       fit: [logoSize, logoSize],
@@ -73,11 +94,11 @@ const generatePdf = async ({ document, company }) => {
 
     pdf
       .font("Helvetica-Bold")
-      .fontSize(20)
+      .fontSize(13)
       .fillColor("#111111")
-      .text(company.companyName.toUpperCase(), textX, 40);
+      .text(company.companyName.toUpperCase(), textX, 62);
 
-    pdf.font("Helvetica").fontSize(10).fillColor("#444444");
+    pdf.font("Helvetica").fontSize(9).fillColor("#444444");
 
     if (address) {
       pdf.text(
@@ -93,120 +114,84 @@ const generatePdf = async ({ document, company }) => {
       );
     }
 
-    let infoY = 105;
+    pdf.moveDown(0.25);
 
-    pdf
-      .font("Helvetica-Bold")
-      .fillColor("#111111")
-      .text("GSTIN :", textX, infoY);
+    const infoX = 410;
+    let infoY = 73;
 
-    pdf.font("Helvetica").text(company.gstin || "-", textX + 45, infoY);
+    const documentLabel = {
+      INVOICE: "Invoice No",
+      PROFORMA: "Proforma No",
+      CREDIT_NOTE: "Credit Note No",
+    }[document.documentType];
 
-    pdf.font("Helvetica-Bold").text("PAN :", 330, infoY);
-
-    pdf.font("Helvetica").text(company.pan || "-", 365, infoY);
-
-    infoY += 18;
-
-    pdf.font("Helvetica-Bold").text("Phone :", textX, infoY);
-
-    pdf.font("Helvetica").text(company.phone || "-", textX + 45, infoY);
-
-    pdf.font("Helvetica-Bold").text("Email :", 330, infoY);
-
-    pdf.font("Helvetica").text(company.email || "-", 370, infoY);
-
-    infoY += 18;
-
-    if (company.website) {
+    const drawInfo = (label, value) => {
       pdf
         .font("Helvetica-Bold")
+        .fontSize(9)
         .fillColor("#111111")
-        .text("Website :", textX, infoY);
+        .text(label, infoX, infoY, {
+          width: 72,
+        });
 
-      pdf
-        .font("Helvetica")
-        .fillColor("#2563eb")
-        .text(company.website, textX + 60, infoY);
-    }
+      pdf.text(":", infoX + 74, infoY);
 
-    pdf.y = 155;
-  } else {
-    pdf
-      .font("Helvetica-Bold")
-      .fontSize(20)
-      .fillColor("#111111")
-      .text(company.companyName.toUpperCase(), {
-        align: "center",
-      });
+      pdf.font("Helvetica").text(value || "-", infoX + 84, infoY);
 
-    pdf.moveDown(0.6);
+      infoY += 15;
+    };
 
-    pdf.font("Helvetica").fontSize(10).fillColor("#444444");
+    drawInfo(documentLabel, document.documentNumber);
 
-    if (address) {
-      pdf.text(
-        `${address.addressLine1}${
-          address.addressLine2 ? ", " + address.addressLine2 : ""
-        }`,
-        {
-          align: "center",
-        },
-      );
+    drawInfo("Date", formatDate(document.documentDate));
 
-      pdf.text(
-        `${address.city}, ${address.state}, ${address.country} - ${address.pincode}`,
-        {
-          align: "center",
-        },
-      );
-    }
+    drawInfo("Due Date", formatDate(document.dueDate));
 
-    pdf.moveDown(0.9);
+    drawInfo("PAN", company.pan);
 
-    const leftInfoX = 90;
-    const rightInfoX = 310;
+    drawInfo("Email", company.email);
+
+    const leftInfoX = 125;
+    const rightInfoX = 300;
+
+    let companyInfoY = 105;
 
     pdf
       .font("Helvetica-Bold")
+      .fontSize(9)
       .fillColor("#111111")
-      .text("GSTIN :", leftInfoX, pdf.y);
-
-    pdf.font("Helvetica").text(company.gstin, leftInfoX + 45, pdf.y - 11);
-
-    pdf.font("Helvetica-Bold").text("PAN :", rightInfoX, pdf.y - 11);
-
-    pdf.font("Helvetica").text(company.pan, rightInfoX + 35, pdf.y - 11);
-
-    pdf.moveDown(0.6);
-
-    pdf.font("Helvetica-Bold").text("Phone :", leftInfoX, pdf.y);
+      .text("GSTIN :", leftInfoX, companyInfoY);
 
     pdf
       .font("Helvetica")
-      .text(company.phone || "-", leftInfoX + 45, pdf.y - 11);
+      .fontSize(9)
+      .text(company.gstin || "-", leftInfoX + 42, companyInfoY);
 
-    pdf.font("Helvetica-Bold").text("Email :", rightInfoX, pdf.y - 11);
+    companyInfoY += 14;
+
+    pdf.font("Helvetica-Bold").text("Phone :", leftInfoX, companyInfoY);
 
     pdf
       .font("Helvetica")
-      .text(company.email || "-", rightInfoX + 42, pdf.y - 11);
+      .text(company.phone || "-", leftInfoX + 42, companyInfoY);
 
-    pdf.moveDown(0.6);
+    companyInfoY += 14;
 
     if (company.website) {
-      pdf.font("Helvetica-Bold").text("Website :", leftInfoX, pdf.y);
+      pdf.font("Helvetica-Bold").text("Website :", leftInfoX, companyInfoY);
 
       pdf
         .font("Helvetica")
         .fillColor("#2563eb")
-        .text(company.website, leftInfoX + 60, pdf.y - 11);
+        .text(company.website, leftInfoX + 52, companyInfoY);
     }
 
-    pdf.moveDown(1);
+    pdf.fillColor("#111111");
   }
 
   pdf.fillColor("#111111");
+
+  pdf.y = 155;
 
   // Divider
   pdf
@@ -227,99 +212,166 @@ const generatePdf = async ({ document, company }) => {
   const leftX = 40;
   const rightX = 310;
 
-  const labelWidth = 85;
-  const lineGap = 18;
+  const labelWidth = 95;
+  const lineGap = 13;
 
   const startY = pdf.y;
 
   const boxWidth = 240;
   const boxHeight = 110;
 
-  // Left Card
+  const drawField = (x, y, label, value, valueWidth = 125) => {
+    if (!value) return false;
 
-  const formatDate = (date) =>
-    date
-      ? new Date(date).toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })
-      : "-";
-
-  const drawField = (x, y, label, value) => {
-    pdf.font("Helvetica-Bold").fontSize(9).fillColor("#555555");
-
-    pdf.text(label, x, y, {
-      width: labelWidth,
-    });
+    pdf
+      .font("Helvetica-Bold")
+      .fontSize(9)
+      .fillColor("#555555")
+      .text(label, x, y, {
+        width: labelWidth,
+      });
 
     pdf.text(":", x + labelWidth + 5, y);
 
-    pdf.font("Helvetica").fontSize(10).fillColor("#000000");
-
-    pdf.text(value || "-", x + labelWidth + 15, y);
+    pdf
+      .font("Helvetica")
+      .fontSize(9)
+      .fillColor("#111111")
+      .text(String(value), x + labelWidth + 15, y, {
+        width: valueWidth,
+      });
+    return true;
   };
 
-  // ---------------- LEFT ----------------
+  // Left Card
 
-  pdf;
   pdf
     .font("Helvetica-Bold")
-    .fontSize(12)
+    .fontSize(11)
     .fillColor("#1f2937")
-    .text("Document Details", leftX, startY);
+    .text("Bill To", leftX, startY);
 
   let leftY = startY + 28;
 
-  drawField(
-    leftX,
-    leftY,
-    "Type",
-    document.documentType
-      .replaceAll("_", " ")
-      .toLowerCase()
-      .replace(/\b\w/g, (c) => c.toUpperCase()),
-  );
+  if (document.customerSnapshot.customerCode) {
+    drawField(
+      leftX,
+      leftY,
+      "Customer Code",
+      document.customerSnapshot.customerCode,
+    );
 
-  leftY += lineGap;
+    leftY += lineGap;
+  }
 
-  drawField(leftX, leftY, "Number", document.documentNumber);
+  if (document.customerSnapshot.customerName) {
+    drawField(leftX, leftY, "Customer", document.customerSnapshot.customerName);
 
-  leftY += lineGap;
+    leftY += lineGap;
+  }
 
-  drawField(leftX, leftY, "Date", formatDate(document.documentDate));
+  if (document.customerSnapshot.contactPerson) {
+    drawField(leftX, leftY, "Contact", document.customerSnapshot.contactPerson);
 
-  leftY += lineGap;
+    leftY += lineGap;
+  }
 
-  drawField(leftX, leftY, "Due Date", formatDate(document.dueDate));
+  if (document.customerSnapshot.email) {
+    drawField(leftX, leftY, "Email", document.customerSnapshot.email);
 
-  // ---------------- RIGHT ----------------
+    leftY += lineGap;
+  }
+
+  if (document.customerSnapshot.phone) {
+    drawField(leftX, leftY, "Phone", document.customerSnapshot.phone);
+
+    leftY += lineGap;
+  }
+
+  if (document.customerSnapshot.gstin) {
+    drawField(leftX, leftY, "GSTIN", document.customerSnapshot.gstin);
+
+    leftY += lineGap;
+  }
+
+  const billing = document.customerSnapshot.billingAddress;
+
+  if (
+    billing &&
+    (billing.addressLine1 ||
+      billing.addressLine2 ||
+      billing.city ||
+      billing.state ||
+      billing.country ||
+      billing.pincode)
+  ) {
+    const billingAddress = [
+      billing.addressLine1,
+      billing.addressLine2,
+      billing.city,
+      billing.state,
+      billing.country,
+      billing.pincode,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    drawField(leftX, leftY, "Address", billingAddress, 135);
+
+    leftY = pdf.y + 4;
+  }
+
+  /* ---------------- RIGHT ---------------- */
 
   pdf
     .font("Helvetica-Bold")
-    .fontSize(12)
+    .fontSize(11)
     .fillColor("#1f2937")
-    .text("Bill To", rightX, startY);
+    .text("Shipping To", rightX, startY);
 
   let rightY = startY + 28;
 
-  drawField(rightX, rightY, "Company", document.customerSnapshot.customerName);
+  const shippingAddress = document.customerSnapshot.shippingAddress || {};
 
-  rightY += lineGap;
+  const isSameAddress =
+    (billing?.addressLine1 || "") === (shippingAddress.addressLine1 || "") &&
+    (billing?.addressLine2 || "") === (shippingAddress.addressLine2 || "") &&
+    (billing?.city || "") === (shippingAddress.city || "") &&
+    (billing?.state || "") === (shippingAddress.state || "") &&
+    (billing?.country || "") === (shippingAddress.country || "") &&
+    (billing?.pincode || "") === (shippingAddress.pincode || "");
 
-  drawField(rightX, rightY, "Contact", document.customerSnapshot.contactPerson);
+  if (isSameAddress) {
+    pdf
+      .font("Helvetica")
+      .fontSize(9)
+      .fillColor("#111111")
+      .text("Same as Bill To", rightX, rightY);
 
-  rightY += lineGap;
+    rightY += lineGap;
+  } else if (
+    shippingAddress.addressLine1 ||
+    shippingAddress.addressLine2 ||
+    shippingAddress.city ||
+    shippingAddress.state ||
+    shippingAddress.country ||
+    shippingAddress.pincode
+  ) {
+    const address = [
+      shippingAddress.addressLine1,
+      shippingAddress.addressLine2,
+      shippingAddress.city,
+      shippingAddress.state,
+      shippingAddress.country,
+      shippingAddress.pincode,
+    ]
+      .filter(Boolean)
+      .join(", ");
 
-  drawField(rightX, rightY, "Email", document.customerSnapshot.email);
+    drawField(rightX, rightY, "Address", address);
 
-  rightY += lineGap;
-
-  drawField(rightX, rightY, "Phone", document.customerSnapshot.phone);
-
-  rightY += lineGap;
-
-  drawField(rightX, rightY, "GSTIN", document.customerSnapshot.gstin);
+    rightY = pdf.y + 4;
+  }
 
   pdf.y = Math.max(leftY, rightY) + 25;
 
@@ -330,13 +382,13 @@ const generatePdf = async ({ document, company }) => {
     .lineTo(555, pdf.y)
     .stroke();
 
-  pdf.moveDown(0.8);
+  pdf.moveDown(0.6);
 
   /* ========================================================== */
   /*                          ITEMS                            */
   /* ========================================================== */
 
-  pdf.font("Helvetica-Bold").fontSize(12);
+  pdf.font("Helvetica-Bold").fontSize(11);
 
   pdf.text("Items", 40);
 
@@ -487,7 +539,7 @@ const generatePdf = async ({ document, company }) => {
     .fill()
     .restore();
 
-  pdf.font("Helvetica-Bold").fontSize(10).fillColor("white");
+  pdf.font("Helvetica-Bold").fontSize(9).fillColor("white");
 
   pdf.text("Grand Total", summaryX + 9, rowY + 3);
 
@@ -511,17 +563,9 @@ const generatePdf = async ({ document, company }) => {
 
   const bank = company.bankDetails || {};
 
-  const maskAccount = (account) => {
-    if (!account) return "-";
-
-    return account.length > 4
-      ? "*".repeat(account.length - 4) + account.slice(-4)
-      : account;
-  };
-
   pdf
     .font("Helvetica-Bold")
-    .fontSize(12)
+    .fontSize(11)
     .fillColor("#111111")
     .text("Payment Details", paymentX, paymentY);
 
@@ -538,23 +582,19 @@ const generatePdf = async ({ document, company }) => {
 
     pdf
       .font("Helvetica")
-      .fontSize(10)
+      .fontSize(9)
       .fillColor("#111111")
       .text(value, paymentX + 90, currentPaymentY);
 
-    currentPaymentY += 18;
+    currentPaymentY += 15;
   };
 
   drawPaymentField("Bank Name", bank.bankName);
   drawPaymentField("Account Name", bank.accountName);
-  drawPaymentField("Account No.", maskAccount(bank.accountNumber));
+  drawPaymentField("Account No.", bank.accountNumber);
   drawPaymentField("IFSC", bank.ifscCode);
   drawPaymentField("Branch", bank.branch);
   drawPaymentField("UPI ID", bank.upiId);
-
-  /* ---------------- QR CODE ---------------- */
-
-  /* ---------------- QR CODE ---------------- */
 
   /* ---------------- QR CODE ---------------- */
 

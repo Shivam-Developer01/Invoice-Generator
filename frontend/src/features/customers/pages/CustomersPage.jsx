@@ -90,6 +90,12 @@ function CustomersPage() {
 
   const columns = [
     {
+      header: "Code",
+      render: (row) => (
+        <span className="badge bg-primary px-3 py-2">{row.customerCode}</span>
+      ),
+    },
+    {
       header: "Customer",
       accessor: "customerName",
     },
@@ -149,7 +155,7 @@ function CustomersPage() {
 
               <Form.Control
                 type="search"
-                placeholder="Search by name, GSTIN, email or phone..."
+                placeholder="Search by code, name, GSTIN, email or phone..."
 
                 value={params.search}
 

@@ -4,6 +4,23 @@ import QueryFeatures from "../utils/queryFeatures.js";
 import { USER_POPULATION } from "../constants/populate.js";
 import { createAuditLog } from "./auditLog.service.js";
 
+const generateCustomerCode = async () => {
+  const lastCustomer = await Customer.findOne()
+    .sort({ customerCode: -1 })
+    .select("customerCode");
+
+  if (!lastCustomer?.customerCode) {
+    return "CUST-0001";
+  }
+
+  const lastNumber = parseInt(
+    lastCustomer.customerCode.replace("CUST-", ""),
+    10,
+  );
+
+  return `CUST-${String(lastNumber + 1).padStart(4, "0")}`;
+};
+
 export const createCustomer = async (data, currentUser) => {
   const existingCustomer = await Customer.findOne({
     $or: [
@@ -20,8 +37,11 @@ export const createCustomer = async (data, currentUser) => {
     );
   }
 
+  const customerCode = await generateCustomerCode();
+
   const customer = await Customer.create({
     ...data,
+    customerCode,
     createdBy: currentUser._id,
     updatedBy: currentUser._id,
   });
@@ -44,7 +64,15 @@ export const createCustomer = async (data, currentUser) => {
 
 export const getCustomers = async (query) => {
   const features = new QueryFeatures(Customer, query)
-    .search(["customerName", "contactPerson", "email", "phone", "gstin", "pan"])
+    .search([
+      "customerCode",
+      "customerName",
+      "contactPerson",
+      "email",
+      "phone",
+      "gstin",
+      "pan",
+    ])
     .filter();
 
   return await features.execute(USER_POPULATION);

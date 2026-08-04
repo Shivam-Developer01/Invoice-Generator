@@ -35,11 +35,17 @@ const addressSchema = new mongoose.Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 const customerSchema = new mongoose.Schema(
   {
+    customerCode: {
+      type: String,
+      unique: true,
+      required: true,
+      index: true,
+    },
     customerName: {
       type: String,
       required: true,
@@ -97,7 +103,7 @@ const customerSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 customerSchema.set("toJSON", {

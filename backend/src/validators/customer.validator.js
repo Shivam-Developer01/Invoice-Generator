@@ -51,14 +51,14 @@ export const validateCreateCustomer = [
     .escape(),
 
   body("contactPerson")
-    .optional()
+    .optional({ values: "falsy" })
     .trim()
     .isLength({ max: 100 })
     .withMessage("Contact person must not exceed 100 characters")
     .escape(),
 
   body("email")
-    .optional()
+    .optional({ values: "falsy" })
     .trim()
     .isEmail()
     .withMessage("Invalid email")
@@ -71,7 +71,7 @@ export const validateCreateCustomer = [
     .withMessage("Invalid phone number"),
 
   body("gstin")
-    .optional()
+    .optional({ values: "falsy" })
     .trim()
     .toUpperCase()
     .matches(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{3}$/)
@@ -90,9 +90,7 @@ export const validateCreateCustomer = [
 ];
 
 export const validateUpdateCustomer = [
-  param("id")
-    .isMongoId()
-    .withMessage("Invalid customer id"),
+  param("id").isMongoId().withMessage("Invalid customer id"),
 
   body("customerName")
     .optional()
@@ -102,14 +100,14 @@ export const validateUpdateCustomer = [
     .escape(),
 
   body("contactPerson")
-    .optional()
+    .optional({ values: "falsy" })
     .trim()
     .isLength({ max: 100 })
     .withMessage("Contact person must not exceed 100 characters")
     .escape(),
 
   body("email")
-    .optional()
+    .optional({ values: "falsy" })
     .trim()
     .isEmail()
     .withMessage("Invalid email")
@@ -122,7 +120,7 @@ export const validateUpdateCustomer = [
     .withMessage("Invalid phone number"),
 
   body("gstin")
-    .optional()
+    .optional({ values: "falsy" })
     .trim()
     .toUpperCase()
     .matches(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{3}$/)
@@ -141,17 +139,11 @@ export const validateUpdateCustomer = [
 ];
 
 export const validateCustomerStatus = [
-  param("id")
-    .isMongoId()
-    .withMessage("Invalid customer id"),
+  param("id").isMongoId().withMessage("Invalid customer id"),
 
-  body("isActive")
-    .isBoolean()
-    .withMessage("isActive must be true or false"),
+  body("isActive").isBoolean().withMessage("isActive must be true or false"),
 ];
 
 export const validateCustomerId = [
-  param("id")
-    .isMongoId()
-    .withMessage("Invalid customer id"),
+  param("id").isMongoId().withMessage("Invalid customer id"),
 ];

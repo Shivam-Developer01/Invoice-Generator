@@ -13,7 +13,6 @@ import {
 } from "../services/company.service.js";
 
 export const update = asyncHandler(async (req, res) => {
-  console.log("Controller reached");
 
   const company = await updateCompany(req.body, req.user);
 
