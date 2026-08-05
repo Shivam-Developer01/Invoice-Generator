@@ -5,7 +5,7 @@ import Company from "../models/company.model.js";
 import ApiError from "../errors/ApiError.js";
 import DocumentSettings from "../models/documentSettings.model.js";
 
-import QueryFeatures from "../utils/QueryFeatures.js";
+import QueryFeatures from "../utils/queryFeatures.js";
 
 import { createAuditLog } from "./auditLog.service.js";
 import { USER_POPULATION } from "../constants/populate.js";
