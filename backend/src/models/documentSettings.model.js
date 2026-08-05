@@ -17,11 +17,19 @@ const documentPrefixSchema = new mongoose.Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 const documentSettingsSchema = new mongoose.Schema(
   {
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      required: true,
+      unique: true,
+      index: true,
+    },
+    
     companyPrefix: {
       type: String,
       required: true,
@@ -78,7 +86,7 @@ const documentSettingsSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 documentSettingsSchema.set("toJSON", {
@@ -89,7 +97,4 @@ documentSettingsSchema.set("toJSON", {
   },
 });
 
-export default mongoose.model(
-  "DocumentSettings",
-  documentSettingsSchema
-);
+export default mongoose.model("DocumentSettings", documentSettingsSchema);

@@ -1,12 +1,8 @@
 import { Card, Form, Table } from "react-bootstrap";
 import { Controller, useWatch } from "react-hook-form";
 
-import useCompany from "../../company/hooks/useCompany";
-
-function TaxesSection({ control }) {
-  const { data } = useCompany();
-
-  const gstOptions = data?.data?.gstOptions?.filter((tax) => tax.active) || [];
+function TaxesSection({ control, gstOptions = [] }) {
+  const activeGstOptions = (gstOptions || []).filter((tax) => tax.active);
 
   const items = useWatch({
     control,
@@ -42,7 +38,7 @@ function TaxesSection({ control }) {
           <>
             <Card className="border-0 shadow-sm mb-3">
               <Card.Body>
-                {gstOptions.map((gst) => {
+                {activeGstOptions.map((gst) => {
                   const checked = field.value.some(
                     (tax) => tax.name === gst.code,
                   );

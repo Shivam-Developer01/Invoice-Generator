@@ -41,7 +41,7 @@ const addressSchema = new mongoose.Schema(
 const customerSnapshotSchema = new mongoose.Schema(
   {
     customerCode: String,
-    
+
     customerName: {
       type: String,
       required: true,
@@ -136,6 +136,13 @@ const documentSchema = new mongoose.Schema(
     },
 
     dueDate: Date,
+
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      required: true,
+      index: true,
+    },
 
     customerId: {
       type: mongoose.Schema.Types.ObjectId,

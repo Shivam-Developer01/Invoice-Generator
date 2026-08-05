@@ -38,8 +38,8 @@ const navigation = [
     roles: ALL_USERS,
   },
   {
-    title: "Company",
-    path: "/company",
+    title: "Companies",
+    path: "/companies",
     icon: FaBuilding,
     roles: ALL_USERS,
   },

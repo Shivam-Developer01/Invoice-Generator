@@ -10,7 +10,8 @@ const QUERY_KEYS = {
   DOCUMENTS: "documents",
   DOCUMENT: "document",
 
-  COMPANY: "company",
+  COMPANIES: "companies",
+  COMPANY_OPTIONS: "company-options",
 
   DOCUMENT_SETTINGS: "document-settings",
 

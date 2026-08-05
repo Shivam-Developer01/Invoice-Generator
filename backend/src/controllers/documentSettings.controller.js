@@ -7,7 +7,7 @@ import {
 } from "../services/documentSettings.service.js";
 
 export const get = asyncHandler(async (req, res) => {
-  const settings = await getSettings();
+  const settings = await getSettings(req.params.id);
 
   return res
     .status(200)
@@ -23,7 +23,7 @@ export const get = asyncHandler(async (req, res) => {
 });
 
 export const update = asyncHandler(async (req, res) => {
-  const settings = await updateSettings(req.body, req.user);
+  const settings = await updateSettings(req.params.id, req.body, req.user);
 
   return res
     .status(200)

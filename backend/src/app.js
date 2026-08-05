@@ -30,7 +30,7 @@ app.use(
     crossOriginResourcePolicy: {
       policy: "cross-origin",
     },
-  })
+  }),
 );
 
 app.use(compression());
@@ -52,7 +52,7 @@ app.use(morgan("dev"));
 app.use("/uploads", express.static(path.resolve("uploads")));
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
-app.use("/api/v1/company", companyRoutes);
+app.use("/api/v1/companies", companyRoutes);
 app.use("/api/v1/customers", customerRoutes);
 app.use("/api/v1/document-settings", documentSettingsRoutes);
 app.use("/api/v1/documents", documentRoutes);

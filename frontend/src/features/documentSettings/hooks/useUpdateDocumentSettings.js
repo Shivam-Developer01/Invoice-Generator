@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
 import QUERY_KEYS from "../../../constants/queryKeys";
-
 import handleApiError from "../../../utils/handleApiError";
 
 import * as documentSettingsService from "../services/documentSettingsService";
@@ -13,11 +12,11 @@ function useUpdateDocumentSettings() {
   return useMutation({
     mutationFn: documentSettingsService.updateDocumentSettings,
 
-    onSuccess: (response) => {
+    onSuccess: async (response, variables) => {
       toast.success(response.message);
 
-      queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.DOCUMENT_SETTINGS],
+      await queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.DOCUMENT_SETTINGS, variables.companyId],
       });
     },
 

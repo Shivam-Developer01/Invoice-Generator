@@ -6,7 +6,7 @@ import handleApiError from "../../../utils/handleApiError";
 
 import * as companyService from "../services/companyService";
 
-function useUpdateCompany() {
+const useUpdateCompany = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -16,12 +16,12 @@ function useUpdateCompany() {
       toast.success(response.message);
 
       queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.COMPANY],
+        queryKey: [QUERY_KEYS.COMPANIES],
       });
     },
 
     onError: handleApiError,
   });
-}
+};
 
 export default useUpdateCompany;

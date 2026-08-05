@@ -71,9 +71,7 @@ export const validateCreateDocument = [
 ];
 
 export const validateUpdateDocument = [
-  param("id")
-    .isMongoId()
-    .withMessage("Invalid document id"),
+  param("id").isMongoId().withMessage("Invalid document id"),
 
   body("documentType")
     .optional()
@@ -82,10 +80,9 @@ export const validateUpdateDocument = [
     .isIn(["INVOICE", "PROFORMA", "CREDIT_NOTE"])
     .withMessage("Invalid document type"),
 
-  body("customerId")
-    .optional()
-    .isMongoId()
-    .withMessage("Invalid customer id"),
+  body("companyId").isMongoId().withMessage("Invalid company"),
+
+  body("customerId").optional().isMongoId().withMessage("Invalid customer id"),
 
   body("documentDate")
     .optional()
@@ -110,19 +107,14 @@ export const validateUpdateDocument = [
     .notEmpty()
     .withMessage("Item description is required"),
 
-  body("items.*.hsnSacCode")
-    .optional()
-    .trim(),
+  body("items.*.hsnSacCode").optional().trim(),
 
   body("items.*.amount")
     .optional()
     .isFloat({ min: 0 })
     .withMessage("Amount must be greater than or equal to 0"),
 
-  body("taxes")
-    .optional()
-    .isArray()
-    .withMessage("Taxes must be an array"),
+  body("taxes").optional().isArray().withMessage("Taxes must be an array"),
 
   body("taxes.*.name")
     .optional()

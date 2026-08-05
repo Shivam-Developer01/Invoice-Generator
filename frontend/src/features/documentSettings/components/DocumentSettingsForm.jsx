@@ -10,7 +10,7 @@ import documentSettingsSchema from "../validation/documentSettingsSchema";
 
 import useUpdateDocumentSettings from "../hooks/useUpdateDocumentSettings";
 
-function DocumentSettingsForm({ settings, loading }) {
+function DocumentSettingsForm({ settings, companyId, loading }) {
   const updateSettingsMutation = useUpdateDocumentSettings();
 
   const {
@@ -58,7 +58,10 @@ function DocumentSettingsForm({ settings, loading }) {
 
   const onSubmit = async (data) => {
     try {
-      await updateSettingsMutation.mutateAsync(data);
+      await updateSettingsMutation.mutateAsync({
+        companyId,
+        data,
+      });
     } catch {}
   };
 

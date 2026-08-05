@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import useDownloadPdf from "../hooks/useDownloadPdf";
@@ -25,6 +25,8 @@ import TaxesSection from "./TaxesSection";
 
 import AddSacCodeModal from "../../sacCodes/components/AddSacCodeModal";
 
+import useCompanyOptions from "../../company/hooks/useCompanyOptions";
+
 function CreateDocumentForm({ document, isEditMode, loading }) {
   const downloadPdfMutation = useDownloadPdf();
   const regeneratePdfMutation = useRegeneratePdf();
@@ -36,6 +38,17 @@ function CreateDocumentForm({ document, isEditMode, loading }) {
   const updateDocumentMutation = useUpdateDocument();
 
   const { customers, isLoading: customersLoading } = useCustomersList();
+
+  const { data: companiesData } = useCompanyOptions();
+
+  const companies = companiesData?.data || [];
+
+  const [selectedCompany, setSelectedCompany] = useState("");
+
+  const selectedCompanyData = useMemo(
+    () => companies.find((company) => company._id === selectedCompany),
+    [companies, selectedCompany],
+  );
 
   const customerOptions = customers
     .filter((customer) => customer.isActive)
@@ -92,6 +105,16 @@ function CreateDocumentForm({ document, isEditMode, loading }) {
   });
 
   useEffect(() => {
+    if (!selectedCompany && companies.length) {
+      setSelectedCompany(companies[0]._id);
+    }
+  }, [companies, selectedCompany]);
+
+  useEffect(() => {
+    setValue("taxes", []);
+  }, [selectedCompany, setValue]);
+
+  useEffect(() => {
     if (
       !isEditMode ||
       !document ||
@@ -99,6 +122,10 @@ function CreateDocumentForm({ document, isEditMode, loading }) {
       customers.length === 0
     ) {
       return;
+    }
+
+    if (document?.companyId?._id) {
+      setSelectedCompany(document.companyId._id);
     }
 
     reset({
@@ -133,11 +160,19 @@ function CreateDocumentForm({ document, isEditMode, loading }) {
 
     const payload = {
       ...formData,
+
+      companyId: selectedCompany,
+
       documentType,
+
       subtotal,
+
       taxes,
+
       totalTax,
+
       totalAmount,
+
       notes: formData.notes.trim() || DEFAULT_NOTES,
     };
 
@@ -172,11 +207,19 @@ function CreateDocumentForm({ document, isEditMode, loading }) {
   const DEFAULT_NOTES =
     "Thank you for your business! We appreciate the opportunity to serve you.";
 
+  console.log("Companies:", companies);
+  console.log("Selected Company:", selectedCompanyData);
+
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CustomerSection
+          companies={companies}
+          selectedCompany={selectedCompany}
+          setSelectedCompany={setSelectedCompany}
+
           customers={customerOptions}
+
           register={register}
           errors={errors}
         />
@@ -194,7 +237,10 @@ function CreateDocumentForm({ document, isEditMode, loading }) {
           }}
         />
 
-        <TaxesSection control={control} />
+        <TaxesSection
+          control={control}
+          gstOptions={selectedCompanyData?.gstOptions || []}
+        />
 
         <NotesSection register={register} />
 

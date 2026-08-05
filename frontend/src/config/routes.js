@@ -11,7 +11,7 @@ const routes = {
 
   CUSTOMERS: "/customers",
 
-  COMPANY: "/company",
+  COMPANIES: "/companies",
 
   DOCUMENT_SETTINGS: "/document-settings",
 

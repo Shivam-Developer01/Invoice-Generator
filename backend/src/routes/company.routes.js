@@ -1,36 +1,47 @@
 import express from "express";
+
 import {
-  get,
+  getAll,
+  getById,
+  getOptions,
+  create,
   update,
+  updateStatus,
   uploadLogo,
 } from "../controllers/company.controller.js";
 
 import { protect } from "../middleware/auth.middleware.js";
 import validate from "../middleware/validate.middleware.js";
-
 import upload from "../config/multer.js";
 
 import {
+  validateCreateCompany,
   validateUpdateCompany,
+  validateCompanyStatus,
+  validateCompanyId,
 } from "../validators/company.validator.js";
 
 const router = express.Router();
 
 router.use(protect);
 
-router.get("/", get);
+router.get("/options", getOptions);
 
-router.patch(
-  "/",
-  validateUpdateCompany,
-  validate,
-  update
-);
+router.route("/").get(getAll).post(validateCreateCompany, validate, create);
+
+router
+  .route("/:id")
+  .get(validateCompanyId, validate, getById)
+  .patch(validateUpdateCompany, validate, update);
+
+router.patch("/:id/status", validateCompanyStatus, validate, updateStatus);
 
 router.post(
-  "/logo",
+  "/:id/logo",
+  validateCompanyId,
+  validate,
   upload.single("logo"),
-  uploadLogo
+  uploadLogo,
 );
 
 export default router;

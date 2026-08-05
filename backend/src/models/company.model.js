@@ -6,6 +6,7 @@ const companySchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      unique: true,
     },
 
     gstin: {
@@ -13,6 +14,7 @@ const companySchema = new mongoose.Schema(
       required: true,
       uppercase: true,
       trim: true,
+      unique: true,
     },
 
     pan: {
@@ -20,6 +22,7 @@ const companySchema = new mongoose.Schema(
       required: true,
       uppercase: true,
       trim: true,
+      unique: true,
     },
 
     email: {
@@ -124,6 +127,16 @@ const companySchema = new mongoose.Schema(
         },
       },
     ],
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
 
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

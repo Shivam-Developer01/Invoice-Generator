@@ -7,7 +7,6 @@ import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import CustomersPage from "../features/customers/pages/CustomersPage";
 import DocumentsPage from "../features/documents/pages/DocumentsPage";
 import CreateDocumentPage from "../features/documents/pages/CreateDocumentPage";
-import CompanyPage from "../features/company/pages/CompanyPage";
 import DocumentSettingsPage from "../features/documentSettings/pages/DocumentSettingsPage";
 import UsersPage from "../features/users/pages/UsersPage";
 import AuditLogsPage from "../features/auditLogs/pages/AuditLogsPage";
@@ -21,6 +20,7 @@ import ProfilePage from "../features/profile/pages/ProfilePage";
 import ChangePasswordPage from "../features/profile/pages/ChangePasswordPage";
 
 import routes from "../config/routes";
+import CompaniesPage from "../features/company/pages/CompaniesPage";
 
 function AppRoutes() {
   return (
@@ -49,7 +49,7 @@ function AppRoutes() {
 
           <Route path={routes.CUSTOMERS} element={<CustomersPage />} />
 
-          <Route path={routes.COMPANY} element={<CompanyPage />} />
+          <Route path={routes.COMPANIES} element={<CompaniesPage />} />
 
           <Route
             path={routes.DOCUMENT_SETTINGS}

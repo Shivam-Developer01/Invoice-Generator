@@ -30,10 +30,10 @@ export const quickActions = [
     path: routes.DOCUMENTS,
   },
   {
-    title: "Company",
+    title: "Companies",
     description: "Update company information",
     icon: FaBuilding,
     color: "primary",
-    path: routes.COMPANY,
+    path: routes.COMPANIES,
   },
 ];

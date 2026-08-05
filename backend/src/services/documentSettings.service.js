@@ -1,21 +1,43 @@
 import DocumentSettings from "../models/documentSettings.model.js";
 import { createAuditLog } from "./auditLog.service.js";
+import ApiError from "../errors/ApiError.js";
+import Company from "../models/company.model.js";
 
-export const getSettings = async () => {
-  return await DocumentSettings.findOne().populate(
-    "updatedBy",
-    "name email role",
-  );
-};
+export const getSettings = async (companyId) => {
+  const company = await Company.findOne({
+    _id: companyId,
+    isDeleted: false,
+  });
 
-export const updateSettings = async (data, currentUser) => {
-  let settings = await DocumentSettings.findOne();
+  if (!company) {
+    throw new ApiError(404, "Company not found");
+  }
+  const settings = await DocumentSettings.findOne({
+    companyId,
+  }).populate("updatedBy", "name email role");
 
   if (!settings) {
-    settings = await DocumentSettings.create({
-      ...data,
-      updatedBy: currentUser._id,
-    });
+    throw new ApiError(404, "Document settings not found");
+  }
+
+  return settings;
+};
+
+export const updateSettings = async (companyId, data, currentUser) => {
+  const company = await Company.findOne({
+    _id: companyId,
+    isDeleted: false,
+  });
+
+  if (!company) {
+    throw new ApiError(404, "Company not found");
+  }
+  let settings = await DocumentSettings.findOne({
+    companyId,
+  });
+
+  if (!settings) {
+    throw new ApiError(404, "Document settings not found");
   } else {
     const {
       companyPrefix,
@@ -48,6 +70,7 @@ export const updateSettings = async (data, currentUser) => {
     entityType: "DOCUMENT_SETTINGS",
     entityId: settings._id,
     metadata: {
+      companyName: company.companyName,
       companyPrefix: settings.companyPrefix,
       financialYear: settings.financialYear,
       separator: settings.separator,

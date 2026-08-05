@@ -116,7 +116,7 @@ const generatePdf = async ({ document, company }) => {
 
     pdf.moveDown(0.25);
 
-    const infoX = 410;
+    const infoX = 395;
     let infoY = 73;
 
     const documentLabel = {

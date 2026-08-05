@@ -2,14 +2,16 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-const uploadDir = "uploads/company/logos";
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
 const storage = multer.diskStorage({
   destination(req, file, cb) {
+    const companyId = req.params.id;
+
+    const uploadDir = path.join("uploads", "company", companyId);
+
+    fs.mkdirSync(uploadDir, {
+      recursive: true,
+    });
+
     cb(null, uploadDir);
   },
 
@@ -21,12 +23,12 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ["image/png", "image/jpeg", "image/jpg"];
+  const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
 
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error("Only PNG, JPG and JPEG images are allowed."));
+    cb(new Error("Only PNG, JPG, JPEG and WEBP images are allowed."));
   }
 };
 
@@ -34,7 +36,7 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 1024 * 1024, // 1 MB
+    fileSize: 1024 * 1024,
   },
 });
 

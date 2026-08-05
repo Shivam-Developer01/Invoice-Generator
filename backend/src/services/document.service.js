@@ -39,7 +39,14 @@ const calculateSubtotal = (items) => {
 
 const populateDocument = async (id) => {
   return await Document.findById(id)
-    .populate("customerId", "customerName email phone isActive")
+    .populate(
+      "companyId",
+      "companyName logoUrl gstin pan email phone website addresses bankDetails gstOptions isActive",
+    )
+    .populate(
+      "customerId",
+      "customerCode customerName email phone gstin pan isActive",
+    )
     .populate(USER_POPULATION);
 };
 
@@ -67,16 +74,22 @@ const calculateTotalAmount = (subtotal, totalTax) => {
 };
 
 export const createDocument = async (data, currentUser) => {
-  const customer = await Customer.findOne({
-    _id: data.customerId,
-    isActive: true,
-  });
+  const company = await Company.findById(data.companyId);
 
-  if (!customer) {
+  if (!company || !company.isActive || company.isDeleted) {
+    throw new ApiError(404, "Company not found or inactive");
+  }
+
+  const customer = await Customer.findById(data.customerId);
+
+  if (!customer || !customer.isActive) {
     throw new ApiError(404, "Customer not found or inactive");
   }
 
-  const documentNumber = await generateDocumentNumber(data.documentType);
+  const documentNumber = await generateDocumentNumber(
+    data.companyId,
+    data.documentType,
+  );
 
   const customerSnapshot = createCustomerSnapshot(customer);
 
@@ -94,6 +107,8 @@ export const createDocument = async (data, currentUser) => {
     documentDate: data.documentDate || new Date(),
 
     dueDate: data.dueDate,
+
+    companyId: company._id,
 
     customerId: customer._id,
 
@@ -117,12 +132,6 @@ export const createDocument = async (data, currentUser) => {
   });
 
   try {
-    const company = await Company.findOne().lean();
-
-    if (!company) {
-      throw new ApiError(404, "Company not found");
-    }
-
     const pdf = await generatePdf({
       document,
       company,
@@ -165,8 +174,12 @@ export const getDocuments = async (query) => {
 
   return await features.execute([
     {
+      path: "companyId",
+      select: "companyName logoUrl",
+    },
+    {
       path: "customerId",
-      select: "customerName email phone",
+      select: "customerCode customerName email phone",
     },
     ...USER_POPULATION,
   ]);
@@ -177,7 +190,14 @@ export const getDocumentById = async (id) => {
     _id: id,
     isDeleted: false,
   })
-    .populate("customerId")
+    .populate(
+      "companyId",
+      "companyName logoUrl gstin pan phone email website addresses bankDetails gstOptions",
+    )
+    .populate(
+      "customerId",
+      "customerCode customerName email phone gstin pan billingAddress shippingAddress isActive",
+    )
     .populate(USER_POPULATION);
 
   if (!document) {
@@ -209,6 +229,20 @@ export const updateDocument = async (id, data, currentUser) => {
 
     document.customerId = customer._id;
     document.customerSnapshot = createCustomerSnapshot(customer);
+  }
+
+  if (data.companyId) {
+    const company = await Company.findOne({
+      _id: data.companyId,
+      isActive: true,
+      isDeleted: false,
+    });
+
+    if (!company) {
+      throw new ApiError(404, "Company not found or inactive");
+    }
+
+    document.companyId = company._id;
   }
 
   if (data.documentDate !== undefined) {
@@ -326,7 +360,11 @@ export const regeneratePdf = async (id, currentUser) => {
     throw new ApiError(404, "Document not found");
   }
 
-  const company = await Company.findOne().lean();
+  const company = await Company.findOne({
+    _id: document.companyId,
+    isActive: true,
+    isDeleted: false,
+  }).lean();
 
   if (!company) {
     throw new ApiError(404, "Company not found");
