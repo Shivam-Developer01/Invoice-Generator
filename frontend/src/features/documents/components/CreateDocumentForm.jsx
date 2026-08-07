@@ -207,9 +207,6 @@ function CreateDocumentForm({ document, isEditMode, loading }) {
   const DEFAULT_NOTES =
     "Thank you for your business! We appreciate the opportunity to serve you.";
 
-  console.log("Companies:", companies);
-  console.log("Selected Company:", selectedCompanyData);
-
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)}>

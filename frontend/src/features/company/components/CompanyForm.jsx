@@ -131,7 +131,6 @@ function CompanyForm({ company, loading, onSuccess }) {
     formData.append("logo", file);
 
     try {
-      console.log("Uploading logo...");
       const response = await uploadLogoMutation.mutateAsync({
         id: company._id,
         data: formData,
