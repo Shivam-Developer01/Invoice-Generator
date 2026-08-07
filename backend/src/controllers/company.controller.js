@@ -53,7 +53,7 @@ export const getOptions = asyncHandler(async (req, res) => {
 /* ========================================================== */
 
 export const create = asyncHandler(async (req, res) => {
-  const company = await createCompany(req.body, req.user);
+  const company = await createCompany(req.body, req.file, req.user);
 
   return res
     .status(201)
@@ -65,7 +65,7 @@ export const create = asyncHandler(async (req, res) => {
 /* ========================================================== */
 
 export const update = asyncHandler(async (req, res) => {
-  const company = await updateCompany(req.params.id, req.body, req.user);
+  const company = await updateCompany(req.params.id, req.body, req.file, req.user);
 
   return res
     .status(200)

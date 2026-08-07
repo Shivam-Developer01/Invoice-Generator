@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
+import sharp from "sharp";
 
 const generatePdf = async ({ document, company }) => {
   const directory = path.join(process.cwd(), "src", "pdfs", "invoices");
@@ -75,7 +76,25 @@ const generatePdf = async ({ document, company }) => {
     ? path.join(process.cwd(), company.logoUrl.replace(/^\/+/, ""))
     : null;
 
-  const hasLogo = logoPath && fs.existsSync(logoPath);
+  const rawHasLogo = logoPath && fs.existsSync(logoPath);
+  let logoBuffer = null;
+  let hasLogo = false;
+
+  if (rawHasLogo) {
+    try {
+      const ext = path.extname(logoPath).toLowerCase();
+      if (ext === ".webp") {
+        logoBuffer = await sharp(logoPath).png().toBuffer();
+      } else {
+        logoBuffer = logoPath;
+      }
+      hasLogo = true;
+    } catch (err) {
+      console.error("Failed to load or convert company logo for PDF:", err.message);
+      logoBuffer = null;
+      hasLogo = false;
+    }
+  }
 
   const address = company.addresses?.registeredOffice;
 
@@ -87,13 +106,18 @@ const generatePdf = async ({ document, company }) => {
   const logoY = 60;
   const logoSize = 55;
 
-  // Only render logo if it actually exists
-  if (hasLogo) {
-    pdf.image(logoPath, logoX, logoY, {
-      fit: [logoSize, logoSize],
-      align: "center",
-      valign: "center",
-    });
+  // Only render logo if it actually exists and is valid
+  if (hasLogo && logoBuffer) {
+    try {
+      pdf.image(logoBuffer, logoX, logoY, {
+        fit: [logoSize, logoSize],
+        align: "center",
+        valign: "center",
+      });
+    } catch (err) {
+      console.error("Failed to embed logo into PDF:", err.message);
+      hasLogo = false;
+    }
   }
 
   // ===========================================================

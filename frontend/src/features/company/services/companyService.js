@@ -21,13 +21,15 @@ export const getCompanyOptions = async () => {
 };
 
 export const createCompany = async (data) => {
-  const response = await api.post("/companies", data);
+  const config = data instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : {};
+  const response = await api.post("/companies", data, config);
 
   return response.data;
 };
 
 export const updateCompany = async ({ id, data }) => {
-  const response = await api.patch(`/companies/${id}`, data);
+  const config = data instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : {};
+  const response = await api.patch(`/companies/${id}`, data, config);
 
   return response.data;
 };

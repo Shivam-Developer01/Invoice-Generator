@@ -4,8 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Row, Col, Form, Button } from "react-bootstrap";
 
 import PrimaryButton from "../../../components/ui/Button/PrimaryButton";
-import useUploadLogo from "../hooks/useUploadLogo";
-
 import companySchema from "../validation/companySchema";
 import useUpdateCompany from "../hooks/useUpdateCompany";
 import useCreateCompany from "../hooks/useCreateCompany";
@@ -25,8 +23,8 @@ function CompanyForm({ company, loading, onSuccess }) {
   const isEditMode = Boolean(company?._id);
   const fileInputRef = useRef(null);
 
-  const uploadLogoMutation = useUploadLogo();
-  const [logoSuccess, setLogoSuccess] = useState(false);
+  const [selectedLogoFile, setSelectedLogoFile] = useState(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState("");
   const [logoUrl, setLogoUrl] = useState(company?.logoUrl || "");
 
   const {
@@ -91,6 +89,8 @@ function CompanyForm({ company, loading, onSuccess }) {
 
   useEffect(() => {
     setLogoUrl(company?.logoUrl || "");
+    setSelectedLogoFile(null);
+    setLogoPreviewUrl("");
   }, [company]);
 
   useEffect(() => {
@@ -122,55 +122,32 @@ function CompanyForm({ company, loading, onSuccess }) {
     });
   }, [company, reset]);
 
-  const handleLogoChange = async (e) => {
+  const handleLogoChange = (e) => {
     const file = e.target.files?.[0];
 
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append("logo", file);
-
-    try {
-      const response = await uploadLogoMutation.mutateAsync({
-        id: company._id,
-        data: formData,
-      });
-
-      setLogoUrl(response.data.logoUrl);
-
-      // Update local object so modal/view use latest logo
-      company.logoUrl = response.data.logoUrl;
-      company.updatedAt = response.data.updatedAt;
-
-      await queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.COMPANIES],
-      });
-
-      await queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.COMPANY],
-      });
-
-      setLogoSuccess(true);
-
-      setTimeout(() => {
-        setLogoSuccess(false);
-      }, 2500);
-    } catch (error) {
-      console.error(error);
-    }
-
-    e.target.value = "";
+    setSelectedLogoFile(file);
+    setLogoPreviewUrl(URL.createObjectURL(file));
   };
 
   const onSubmit = async (data) => {
     try {
+      let payload = data;
+      if (selectedLogoFile) {
+        const formData = new FormData();
+        formData.append("logo", selectedLogoFile);
+        formData.append("data", JSON.stringify(data));
+        payload = formData;
+      }
+
       if (isEditMode) {
         await updateCompanyMutation.mutateAsync({
           id: company._id,
-          data,
+          data: payload,
         });
       } else {
-        await createCompanyMutation.mutateAsync(data);
+        await createCompanyMutation.mutateAsync(payload);
       }
 
       onSuccess?.();
@@ -182,6 +159,7 @@ function CompanyForm({ company, loading, onSuccess }) {
   }
 
   const GST_CODES = ["CGST", "SGST", "IGST", "UTGST", "CESS"];
+  const currentLogoDisplay = logoPreviewUrl || (logoUrl ? `${import.meta.env.VITE_SERVER_URL}${logoUrl}?t=${Date.now()}` : "");
 
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
@@ -189,9 +167,9 @@ function CompanyForm({ company, loading, onSuccess }) {
       <div className="border rounded-4 bg-light p-4 mb-4 text-center">
         <h5 className="fw-semibold mb-3">Company Logo</h5>
 
-        {logoUrl ? (
+        {currentLogoDisplay ? (
           <img
-            src={`${import.meta.env.VITE_SERVER_URL}${logoUrl}?t=${Date.now()}`}
+            src={currentLogoDisplay}
             alt="Company Logo"
             className="img-thumbnail shadow-sm"
             style={{
@@ -226,17 +204,10 @@ function CompanyForm({ company, loading, onSuccess }) {
         <div className="mt-4">
           <PrimaryButton
             type="button"
-            loading={uploadLogoMutation.isPending}
-            disabled={!isEditMode}
             onClick={() => fileInputRef.current.click()}
           >
-            {isEditMode ? "Change Logo" : "Save company first"}
+            {currentLogoDisplay ? "Change Logo" : "Upload Logo"}
           </PrimaryButton>
-          {logoSuccess && (
-            <div className="alert alert-success py-2 mt-3 mb-0">
-              ✅ Logo updated successfully.
-            </div>
-          )}
 
           <div
             className="text-muted mt-2"

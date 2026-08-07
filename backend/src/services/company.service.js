@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import sharp from "sharp";
 
 import Company from "../models/company.model.js";
 import ApiError from "../errors/ApiError.js";
@@ -9,6 +10,29 @@ import QueryFeatures from "../utils/queryFeatures.js";
 
 import { createAuditLog } from "./auditLog.service.js";
 import { USER_POPULATION } from "../constants/populate.js";
+
+const processLogoFile = async (file, targetDir) => {
+  fs.mkdirSync(targetDir, { recursive: true });
+
+  const ext = path.extname(file.filename).toLowerCase();
+  let finalFilename = file.filename;
+  const targetPath = path.join(targetDir, finalFilename);
+
+  if (ext === ".webp") {
+    finalFilename = file.filename.replace(/\.webp$/i, ".png");
+    const pngPath = path.join(targetDir, finalFilename);
+    await sharp(file.path).png().toFile(pngPath);
+    if (fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+  } else {
+    if (file.path !== targetPath && fs.existsSync(file.path)) {
+      fs.renameSync(file.path, targetPath);
+    }
+  }
+
+  return finalFilename;
+};
 
 /* ========================================================== */
 /*                    GET ALL COMPANIES                        */
@@ -57,12 +81,26 @@ export const getCompanyOptions = async () => {
 /*                    CREATE COMPANY                          */
 /* ========================================================== */
 
-export const createCompany = async (data, currentUser) => {
+export const createCompany = async (data, file, currentUser) => {
   const company = await Company.create({
     ...data,
     createdBy: currentUser._id,
     updatedBy: currentUser._id,
   });
+
+  if (file) {
+    const targetDir = path.join(
+      process.cwd(),
+      "uploads",
+      "company",
+      company._id.toString(),
+    );
+
+    const filename = await processLogoFile(file, targetDir);
+
+    company.logoUrl = `/uploads/company/${company._id}/${filename}`;
+    await company.save();
+  }
 
   await DocumentSettings.create({
     companyId: company._id,
@@ -106,7 +144,7 @@ export const createCompany = async (data, currentUser) => {
 /*                    UPDATE COMPANY                          */
 /* ========================================================== */
 
-export const updateCompany = async (id, data, currentUser) => {
+export const updateCompany = async (id, data, file, currentUser) => {
   const company = await Company.findOne({
     _id: id,
     isDeleted: false,
@@ -119,6 +157,18 @@ export const updateCompany = async (id, data, currentUser) => {
   const { logoUrl, ...updateData } = data;
 
   Object.assign(company, updateData);
+
+  if (file) {
+    const targetDir = path.join(
+      process.cwd(),
+      "uploads",
+      "company",
+      company._id.toString(),
+    );
+
+    const filename = await processLogoFile(file, targetDir);
+    company.logoUrl = `/uploads/company/${company._id}/${filename}`;
+  }
 
   company.updatedBy = currentUser._id;
 
@@ -186,14 +236,16 @@ export const uploadCompanyLogo = async (id, file, currentUser) => {
     throw new ApiError(404, "Company not found");
   }
 
-  const companyFolder = path.join(
+  const targetDir = path.join(
     process.cwd(),
     "uploads",
     "company",
     company._id.toString(),
   );
 
-  company.logoUrl = `/uploads/company/${company._id}/${file.filename}`;
+  const filename = await processLogoFile(file, targetDir);
+
+  company.logoUrl = `/uploads/company/${company._id}/${filename}`;
   company.updatedBy = currentUser._id;
 
   await company.save();
