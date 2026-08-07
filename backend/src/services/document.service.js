@@ -145,7 +145,12 @@ export const createDocument = async (data, currentUser) => {
 
     await document.save();
   } catch (error) {
-    console.error("PDF Generation Error:", error);
+    // console.error("PDF Generation Error:", error);
+    console.error("========== PDF ERROR ==========");
+    console.error("Company:", company.companyName);
+    console.error("Company ID:", company._id);
+    console.error(error);
+    console.error(error.stack);
   }
 
   await createAuditLog({
