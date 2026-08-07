@@ -80,7 +80,7 @@ export const validateUpdateDocument = [
     .isIn(["INVOICE", "PROFORMA", "CREDIT_NOTE"])
     .withMessage("Invalid document type"),
 
-  body("companyId").isMongoId().withMessage("Invalid company"),
+  body("companyId").optional().isMongoId().withMessage("Invalid company"),
 
   body("customerId").optional().isMongoId().withMessage("Invalid customer id"),
 

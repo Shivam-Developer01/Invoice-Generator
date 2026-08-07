@@ -111,8 +111,10 @@ function CreateDocumentForm({ document, isEditMode, loading }) {
   }, [companies, selectedCompany]);
 
   useEffect(() => {
-    setValue("taxes", []);
-  }, [selectedCompany, setValue]);
+    if (!isEditMode) {
+      setValue("taxes", []);
+    }
+  }, [selectedCompany, setValue, isEditMode]);
 
   useEffect(() => {
     if (
@@ -214,9 +216,8 @@ function CreateDocumentForm({ document, isEditMode, loading }) {
           companies={companies}
           selectedCompany={selectedCompany}
           setSelectedCompany={setSelectedCompany}
-
+          isEditMode={isEditMode}
           customers={customerOptions}
-
           register={register}
           errors={errors}
         />

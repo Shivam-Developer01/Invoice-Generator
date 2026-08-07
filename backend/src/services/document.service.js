@@ -236,18 +236,8 @@ export const updateDocument = async (id, data, currentUser) => {
     document.customerSnapshot = createCustomerSnapshot(customer);
   }
 
-  if (data.companyId) {
-    const company = await Company.findOne({
-      _id: data.companyId,
-      isActive: true,
-      isDeleted: false,
-    });
-
-    if (!company) {
-      throw new ApiError(404, "Company not found or inactive");
-    }
-
-    document.companyId = company._id;
+  if (data.companyId && document.companyId.toString() !== data.companyId.toString()) {
+    throw new ApiError(400, "Company cannot be changed after document creation");
   }
 
   if (data.documentDate !== undefined) {

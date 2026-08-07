@@ -6,7 +6,7 @@ function CustomerSection({
   companies,
   selectedCompany,
   setSelectedCompany,
-
+  isEditMode = false,
   customers,
   register,
   errors,
@@ -21,6 +21,7 @@ function CustomerSection({
         <Form.Select
           value={selectedCompany}
           onChange={(e) => setSelectedCompany(e.target.value)}
+          disabled={isEditMode}
         >
           {companies.map((company) => (
             <option key={company._id} value={company._id}>
@@ -28,6 +29,11 @@ function CustomerSection({
             </option>
           ))}
         </Form.Select>
+        {isEditMode && (
+          <Form.Text className="text-muted">
+            Company cannot be changed after document creation.
+          </Form.Text>
+        )}
       </Form.Group>
 
       <CustomerSelect
