@@ -79,121 +79,175 @@ const generatePdf = async ({ document, company }) => {
 
   const address = company.addresses?.registeredOffice;
 
-  if (hasLogo) {
-    const logoX = 40;
-    const logoY = 60;
-    const logoSize = 55;
+  // ===========================================================
+  // LOGO
+  // ===========================================================
 
+  const logoX = 40;
+  const logoY = 60;
+  const logoSize = 55;
+
+  // Only render logo if it actually exists
+  if (hasLogo) {
     pdf.image(logoPath, logoX, logoY, {
       fit: [logoSize, logoSize],
       align: "center",
       valign: "center",
     });
-
-    const textX = 125;
-
-    pdf
-      .font("Helvetica-Bold")
-      .fontSize(13)
-      .fillColor("#111111")
-      .text(company.companyName.toUpperCase(), textX, 62);
-
-    pdf.font("Helvetica").fontSize(9).fillColor("#444444");
-
-    if (address) {
-      pdf.text(
-        `${address.addressLine1}${
-          address.addressLine2 ? ", " + address.addressLine2 : ""
-        }`,
-        textX,
-      );
-
-      pdf.text(
-        `${address.city}, ${address.state}, ${address.country} - ${address.pincode}`,
-        textX,
-      );
-    }
-
-    pdf.moveDown(0.25);
-
-    const infoX = 395;
-    let infoY = 73;
-
-    const documentLabel = {
-      INVOICE: "Invoice No",
-      PROFORMA: "Proforma No",
-      CREDIT_NOTE: "Credit Note No",
-    }[document.documentType];
-
-    const drawInfo = (label, value) => {
-      pdf
-        .font("Helvetica-Bold")
-        .fontSize(9)
-        .fillColor("#111111")
-        .text(label, infoX, infoY, {
-          width: 72,
-        });
-
-      pdf.text(":", infoX + 74, infoY);
-
-      pdf.font("Helvetica").text(value || "-", infoX + 84, infoY);
-
-      infoY += 15;
-    };
-
-    drawInfo(documentLabel, document.documentNumber);
-
-    drawInfo("Date", formatDate(document.documentDate));
-
-    drawInfo("Due Date", formatDate(document.dueDate));
-
-    drawInfo("PAN", company.pan);
-
-    drawInfo("Email", company.email);
-
-    const leftInfoX = 125;
-    const rightInfoX = 300;
-
-    let companyInfoY = 105;
-
-    pdf
-      .font("Helvetica-Bold")
-      .fontSize(9)
-      .fillColor("#111111")
-      .text("GSTIN :", leftInfoX, companyInfoY);
-
-    pdf
-      .font("Helvetica")
-      .fontSize(9)
-      .text(company.gstin || "-", leftInfoX + 42, companyInfoY);
-
-    companyInfoY += 14;
-
-    pdf.font("Helvetica-Bold").text("Phone :", leftInfoX, companyInfoY);
-
-    pdf
-      .font("Helvetica")
-      .text(company.phone || "-", leftInfoX + 42, companyInfoY);
-
-    companyInfoY += 14;
-
-    if (company.website) {
-      pdf.font("Helvetica-Bold").text("Website :", leftInfoX, companyInfoY);
-
-      pdf
-        .font("Helvetica")
-        .fillColor("#2563eb")
-        .text(company.website, leftInfoX + 52, companyInfoY);
-    }
-
-    pdf.fillColor("#111111");
   }
 
+  // ===========================================================
+  // COMPANY DETAILS
+  // ===========================================================
+
+  // If logo exists, company details start after logo.
+  // Otherwise use the empty logo space so layout stays consistent.
+  const textX = hasLogo ? 125 : 40;
+
+  pdf
+    .font("Helvetica-Bold")
+    .fontSize(13)
+    .fillColor("#111111")
+    .text(company.companyName?.toUpperCase() || "-", textX, 62);
+
+  pdf.font("Helvetica").fontSize(9).fillColor("#444444");
+
+  if (address) {
+    const addressLine = `${address.addressLine1 || ""}${
+      address.addressLine2 ? ", " + address.addressLine2 : ""
+    }`;
+
+    if (addressLine.trim()) {
+      pdf.text(addressLine, textX);
+    }
+
+    const cityLine = [address.city, address.state, address.country]
+      .filter(Boolean)
+      .join(", ");
+
+    const locationLine = address.pincode
+      ? `${cityLine}${cityLine ? " - " : ""}${address.pincode}`
+      : cityLine;
+
+    if (locationLine) {
+      pdf.text(locationLine, textX);
+    }
+  }
+
+  pdf.moveDown(0.25);
+
+  // ===========================================================
+  // DOCUMENT DETAILS - RIGHT SIDE
+  // ===========================================================
+
+  const infoX = 395;
+  let infoY = 73;
+
+  const documentLabel = {
+    INVOICE: "Invoice No",
+    PROFORMA: "Proforma No",
+    CREDIT_NOTE: "Credit Note No",
+  }[document.documentType];
+
+  const drawInfo = (label, value) => {
+    pdf
+      .font("Helvetica-Bold")
+      .fontSize(9)
+      .fillColor("#111111")
+      .text(label || "-", infoX, infoY, {
+        width: 72,
+      });
+
+    pdf.text(":", infoX + 74, infoY);
+
+    pdf
+      .font("Helvetica")
+      .fontSize(9)
+      .fillColor("#111111")
+      .text(value || "-", infoX + 84, infoY);
+
+    infoY += 15;
+  };
+
+  drawInfo(documentLabel || "Document No", document.documentNumber);
+
+  drawInfo(
+    "Date",
+    document.documentDate ? formatDate(document.documentDate) : "-",
+  );
+
+  drawInfo("Due Date", document.dueDate ? formatDate(document.dueDate) : "-");
+
+  drawInfo("PAN", company.pan);
+
+  drawInfo("Email", company.email);
+
+  // ===========================================================
+  // COMPANY ADDITIONAL INFORMATION - LEFT SIDE
+  // ===========================================================
+
+  // Keep this aligned with company details.
+  const leftInfoX = textX;
+
+  let companyInfoY = 105;
+
+  // GSTIN
+  pdf
+    .font("Helvetica-Bold")
+    .fontSize(9)
+    .fillColor("#111111")
+    .text("GSTIN :", leftInfoX, companyInfoY);
+
+  pdf
+    .font("Helvetica")
+    .fontSize(9)
+    .fillColor("#111111")
+    .text(company.gstin || "-", leftInfoX + 42, companyInfoY);
+
+  companyInfoY += 14;
+
+  // Phone
+  pdf
+    .font("Helvetica-Bold")
+    .fontSize(9)
+    .fillColor("#111111")
+    .text("Phone :", leftInfoX, companyInfoY);
+
+  pdf
+    .font("Helvetica")
+    .fontSize(9)
+    .fillColor("#111111")
+    .text(company.phone || "-", leftInfoX + 42, companyInfoY);
+
+  companyInfoY += 14;
+
+  // Website
+  if (company.website) {
+    pdf
+      .font("Helvetica-Bold")
+      .fontSize(9)
+      .fillColor("#111111")
+      .text("Website :", leftInfoX, companyInfoY);
+
+    pdf
+      .font("Helvetica")
+      .fontSize(9)
+      .fillColor("#2563eb")
+      .text(company.website, leftInfoX + 52, companyInfoY, {
+        link: company.website,
+        underline: false,
+      });
+  }
+
+  // Reset text color
   pdf.fillColor("#111111");
+
+  // ===========================================================
+  // HEADER DIVIDER
+  // ===========================================================
 
   pdf.y = 155;
 
-  // Divider
   pdf
     .save()
     .strokeColor("#B5B5B5")
@@ -206,7 +260,7 @@ const generatePdf = async ({ document, company }) => {
   pdf.moveDown(0.8);
 
   /* ========================================================== */
-  /*               DOCUMENT & CUSTOMER DETAILS                  */
+  /*                    CUSTOMER DETAILS                        */
   /* ========================================================== */
 
   const leftX = 40;
